@@ -159,4 +159,6 @@ plt.show()
 # Display sorted scores
 sorted_df2
 
+st.pyplot(plt.gcf())
+
 
