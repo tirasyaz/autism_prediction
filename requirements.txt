@@ -1,2 +1,5 @@
 seaborn
 sklearn
+numpy
+pandas
+streamlit
