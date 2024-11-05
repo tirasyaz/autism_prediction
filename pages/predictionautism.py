@@ -1,165 +1,58 @@
-
-import pandas as pd
-import numpy as np
 import streamlit as st
-df = pd.read_csv('https://raw.githubusercontent.com/tirasyaz/autism_prediction/refs/heads/main/Toddler%20Autism%20dataset%20July%202018.csv')
-
-df.head()
-
-st.write(df)
-
-# Detecting any missing values
-df.isna().sum()
-
-df = pd.read_csv('https://raw.githubusercontent.com/amirulerfn/jie43202/refs/heads/main/Toddler%20Autism%20dataset%20July%202018.csv')
-
-# List of columns to remove
-columns_to_remove = ['Sex', 'Ethnicity', 'Jaundice', 'Family_mem_with_ASD', 'Who completed the test']
-
-# Drop the columns
-df = df.drop(columns_to_remove, axis=1)
-
-# Save the modified DataFrame if needed
-df.to_csv('modified_dataset.csv', index=False)
-
-df.head()
-
 import pandas as pd
-
-df1 = pd.read_csv('modified_dataset.csv')
-bools1 = ['Class/ASD Traits ']
-
-for col in bools1:
-  df1[col] = df1[col].replace({'Yes': 1, 'No': 0})
-
-# Save the modified DataFrame
-df1.to_csv('modified_dataset.csv', index=False)
-
-# Now df1 is modified with Yes/No converted to 1/0
-df1.head()
-
-# Calculate mean and standard deviation
-mean = df1.mean()
-std_dev = df1.std()
-
-# Set a threshold for outliers
-threshold = 3
-lower_bound = mean - threshold * std_dev
-upper_bound = mean + threshold * std_dev
-
-# Find outliers
-outliers = df[(df1 < lower_bound) | (df1 > upper_bound)]
-
-print("Outliers:")
-print(outliers)
-
-df2 = pd.read_csv('modified_dataset.csv')
-import warnings
-from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
-
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import StandardScaler, RobustScaler, QuantileTransformer
-from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, PowerTransformer, Normalizer
-
-import pandas as pd
-from sklearn.metrics import accuracy_score, confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import mean_absolute_error
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
-                              AdaBoostClassifier)
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import SGDClassifier
-#Import scikit-learn metrics module for accuracy calculation
-from sklearn import metrics
-def ignore_warn(*args, **kwargs):
-    pass
-warnings.warn = ignore_warn
 
-X = df2.drop('Class/ASD Traits ',axis=1)
-y = df2.iloc[:,-2]
-X.columns = X.columns.astype(str)
+# Load the dataset
+file_path = '/mnt/data/Toddler Autism dataset July 2018.csv'
+data = pd.read_csv(file_path)
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.ensemble import RandomForestClassifier
-import pandas as pd
+# Set up the Streamlit app
+st.title("Toddler Autism Dataset Visualization")
+st.write("This app visualizes the Toddler Autism dataset parameters.")
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+# Display the dataset
+if st.checkbox("Show Raw Data"):
+    st.write(data)
 
-# Define models
-models = [
-    RandomForestClassifier(n_estimators=50),
-    SGDClassifier(),
-    SVC(C=1, kernel='rbf', degree=3, gamma='scale')
-]
-names = ['Random Forest', 'SGD Classifier', 'SVM']
+# Basic Information
+st.subheader("Dataset Information")
+st.write("Number of Rows:", data.shape[0])
+st.write("Number of Columns:", data.shape[1])
+st.write("Column Names:", data.columns.tolist())
 
-# Create an empty dictionary to store the results
-results = {'Model': [], 'Accuracy': [], 'Sensitivity': [], 'Specificity': [], 'Mean Score': []}
+# Select column for visualization
+selected_column = st.selectbox("Select a column to visualize", data.columns)
 
-# Plot settings
-fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+# Display selected column distribution
+st.subheader(f"Distribution of {selected_column}")
 
-for counter, model in enumerate(models):
-    # Train the model
-    model.fit(X_train, y_train)
+fig, ax = plt.subplots()
+if data[selected_column].dtype == 'object':
+    sns.countplot(y=data[selected_column], ax=ax, palette="viridis")
+    st.pyplot(fig)
+else:
+    sns.histplot(data[selected_column], kde=True, ax=ax, color="blue")
+    st.pyplot(fig)
 
-    # Make predictions on the test set
-    y_pred = model.predict(X_test)
+# Correlation Heatmap
+st.subheader("Correlation Heatmap")
+numeric_columns = data.select_dtypes(include=['float64', 'int64']).columns
+if len(numeric_columns) > 1:
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(data[numeric_columns].corr(), annot=True, cmap="coolwarm", ax=ax)
+    st.pyplot(fig)
+else:
+    st.write("Not enough numeric columns for a correlation heatmap.")
 
-    # Calculate confusion matrix values
-    cm = metrics.confusion_matrix(y_test, y_pred)
+# Pairplot for selected subset of columns
+st.subheader("Pairplot for Selected Columns")
+selected_columns = st.multiselect("Choose columns for pairplot", numeric_columns)
+if len(selected_columns) > 1:
+    fig = sns.pairplot(data[selected_columns])
+    st.pyplot(fig)
+else:
+    st.write("Select at least two columns for a pairplot.")
 
-    # Calculate accuracy
-    accuracy = metrics.accuracy_score(y_test, y_pred)
-
-    # Handle multiclass confusion matrix (same logic from original code)
-    sensitivity = np.diag(cm) / np.sum(cm, axis=1)
-    specificity = []
-    for i in range(cm.shape[0]):
-        temp = np.delete(cm, i, axis=0)
-        temp = np.delete(temp, i, axis=1)
-        tn = np.sum(temp)
-        fp = np.sum(cm[i, :]) - cm[i, i]
-        specificity.append(tn / (tn + fp))
-
-    # Calculate mean scores
-    mean_sensitivity = np.mean(sensitivity)
-    mean_specificity = np.mean(specificity)
-    mean_score = (accuracy + mean_sensitivity + mean_specificity) / 3
-
-    # Store the results in the dictionary
-    results['Model'].append(names[counter])
-    results['Accuracy'].append(accuracy)
-    results['Sensitivity'].append(mean_sensitivity)
-    results['Specificity'].append(mean_specificity)
-    results['Mean Score'].append(mean_score)
-
-    # Plot confusion matrix
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=axes[counter])
-    axes[counter].set_title(f'{names[counter]} Confusion Matrix')
-    axes[counter].set_xlabel('Predicted')
-    axes[counter].set_ylabel('Actual')
-
-# Create a dataframe from the results dictionary
-scores = pd.DataFrame(results)
-
-# Sort dataframe by mean score
-sorted_df2 = scores.sort_values(by='Mean Score', ascending=False)
-
-# Show plot
-plt.tight_layout()
-plt.show()
-
-# Display sorted scores
-sorted_df2
-
-st.pyplot(plt.gcf())
-
-
+# Run with: streamlit run app.py
+streamlit run app.py
