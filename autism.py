@@ -3,6 +3,8 @@ import numpy as np
 import streamlit as st
 df = pd.read_csv('https://raw.githubusercontent.com/tirasyaz/autism_prediction/refs/heads/main/Toddler%20Autism%20dataset%20July%202018.csv')
 
+st.title("Toddler Autism Dataset")
+st.write("This is the raw data for toddler autism dataset:")
 df.head()
 
 st.write(df)
