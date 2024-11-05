@@ -55,4 +55,4 @@ else:
     st.write("Select at least two columns for a pairplot.")
 
 # Run with: streamlit run app.py
-streamlit run app.py
+
