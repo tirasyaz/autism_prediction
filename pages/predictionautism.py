@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load the dataset
-file_path = '/mnt/data/Toddler Autism dataset July 2018.csv'
+file_path = 'https://raw.githubusercontent.com/tirasyaz/autism_prediction/refs/heads/main/Toddler%20Autism%20dataset%20July%202018.csv'
 data = pd.read_csv(file_path)
 
 # Set up the Streamlit app
